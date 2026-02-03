@@ -1679,15 +1679,45 @@
             showToast('Редактирование будет в следующем обновлении', 'success');
         }
 
-        function supportProject() {
+        async function supportProject() {
+    showToast('Создаём платёж...', 'success');
+    
+    try {
+        const res = await fetch(API + '/api/payment/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: userId,
+                amount: 399,
+                payment_type: 'support',
+                description: 'Поддержка проекта SubTrack'
+            })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success && data.payment_url) {
+            // Открываем страницу оплаты
             if (tg) {
-                // Отправляем запрос на оплату через бота
-                tg.sendData(JSON.stringify({ action: 'support', amount: 399 }));
+                // В Telegram открываем внешнюю ссылку
+                tg.openLink(data.payment_url);
             } else {
-                window.open('https://t.me/your_bot?start=support', '_blank');
+                window.open(data.payment_url, '_blank');
             }
-            hapticFeedback('success');
+            showToast('Переход к оплате...', 'success');
+        } else {
+            showToast('Ошибка создания платежа', 'error');
         }
+    } catch (e) {
+        console.error(e);
+        // Fallback — открываем бота
+        const url = 'https://t.me/SubTrack100_bot?start=donate';
+        if (tg) tg.openTelegramLink(url); 
+        else window.open(url, '_blank');
+    }
+    
+    haptic('success');
+}
 
         function showNotifications() {
             showToast('Уведомления настраиваются в боте', 'success');
@@ -1784,4 +1814,5 @@
         }
     </script>
 </body>
+
 </html>
